@@ -4,6 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <unistd.h>
+
 
 
 //ASSUME CLIENT CODE HERE
@@ -27,12 +29,20 @@ int main()
         printf("Server: There was an error in making a connection to the remote socket.");
     }
 
+    char message[256];
+    scanf("%s", message);
+    
+
+    send(socketData, message, sizeof(message), 0);
+
+    
     //This code will receive(recv) data from a server
-    char server_output[256]; //String that holds response from server
-    recv(socketData, &server_output, sizeof(server_output), 0);
+    //char server_output[256]; //String that holds response from server
+    //recv(socketData, &server_output, sizeof(server_output), 0);
 
     //print out data that has been received from the server
-    printf("Server: %s", server_output);
+    //printf("Server: %s", server_output);
+    
 
     //finally, close the socket.
     close(socketData);

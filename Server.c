@@ -4,6 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <unistd.h>
+
 
 int main()
 {
@@ -28,9 +30,14 @@ int main()
     //Start accepting client connections
     int client_socket;
     client_socket = accept(serverSocket, NULL, NULL);
+   
 
     //Send a server message
-    send(client_socket, server_message, sizeof(server_message), 0);
+    //send(client_socket, server_message, sizeof(server_message), 0);
+    
+    char message_output[256];
+    recv(client_socket, &message_output, sizeof(message_output), 0);
+    printf("%s", message_output);
 
     //close the socket now
     close(serverSocket);
