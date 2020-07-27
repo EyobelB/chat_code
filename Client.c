@@ -30,7 +30,8 @@ int main()
     }
 
     char message[256];
-    scanf("%s", message);
+    printf(": ");
+    fgets(message, 256, stdin);
     
 
     send(socketData, message, sizeof(message), 0);

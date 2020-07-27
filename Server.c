@@ -37,7 +37,7 @@ int main()
     
     char message_output[256];
     recv(client_socket, &message_output, sizeof(message_output), 0);
-    printf("%s", message_output);
+    printf("%d: %s", client_socket, message_output);
 
     //close the socket now
     close(serverSocket);
