@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
+#include <time.h>
 #include <unistd.h>
 
 #define MAX_ARR_LEN 256
@@ -12,9 +12,7 @@
 
 int main()
 {
-    char server_message[MAX_ARR_LEN] = "Successfully connected!";
-
-
+    //initialize the server socket
     int serverSocket;
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -43,8 +41,8 @@ int main()
     //Accept for now
     client_socket = accept(serverSocket, NULL, NULL);
 
-    send(client_socket, server_message, sizeof(server_message), 0);
-    send(client_socket, "Enter the passcode below", MAX_ARR_LEN, 0);
+    send(client_socket, "Successfully Connected", 23, 0);
+    send(client_socket, "Enter the passcode below", 25, 0);
 
     //Receive the client passcode, one byte at a time
     recv(client_socket, &clientPasscode, MAX_ARR_LEN, 0);
@@ -53,11 +51,12 @@ int main()
     //Check for password compliance
     if(strcmp(passcode, clientPasscode) != 0)
     {
-        send(client_socket, "Sorry, wrong password...", MAX_ARR_LEN, 0);
+        send(client_socket, "Sorry, wrong password...", 25, 0);
     }
     else
     {
-        send(client_socket, "Welcome to the server!", MAX_ARR_LEN, 0);
+        send(client_socket, "Welcome to the server!", 23, 0);
+
     }
 
 

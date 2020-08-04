@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
+#include <time.h>
 #include <unistd.h>
 
 #define MAX_ARR_LEN 256
@@ -14,6 +14,17 @@
 //ASSUME CLIENT CODE HERE
 int main()
 {
+    //Define time immediately
+    time_t timeTrackerInSeconds, val = 1;
+
+    //Pointer to other types of time
+    struct tm* current_time;
+    timeTrackerInSeconds = time(NULL);
+
+    current_time = localtime(&timeTrackerInSeconds);
+
+
+
     //Create a socket
     int clientSocket;
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -68,7 +79,8 @@ int main()
 
     //Allow for message to be received from server as to whether or not kick has happened
     recv(clientSocket, &pwdMessage, MAX_ARR_LEN, 0);
-    printf("%s", pwdMessage);
+    //printf("%s\n", pwdMessage);
+    printf("[%02d:%02d:%02d] %s", current_time->tm_hour, current_time->tm_min, current_time->tm_sec, pwdMessage);
 
     close(clientSocket);
 
