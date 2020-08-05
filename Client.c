@@ -33,7 +33,7 @@ int main()
     //Specify an address for the client
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(9002);
+    server_address.sin_port = htons(6667);
     server_address.sin_addr.s_addr = INADDR_ANY;
 
     int connection_status = connect(clientSocket, (struct sockaddr *) &server_address, sizeof(server_address));
@@ -47,21 +47,51 @@ int main()
 
     //This code will receive(recv) data from a server
     char server_output[MAX_ARR_LEN];
+    char* clientUsername = calloc(MAX_ARR_LEN, sizeof(char));
     char* clientPasscode = calloc(MAX_ARR_LEN, sizeof(char));
     char pwdMessage[MAX_ARR_LEN];
+
+    char usernameRequest[MAX_ARR_LEN];
+    char pwdRequest[MAX_ARR_LEN];
 
     recv(clientSocket, &server_output, sizeof(server_output), 0);
     printf("Server: %s\n", server_output);
     recv(clientSocket, &server_output, MAX_ARR_LEN, 0);
 
-    char pwdRequest[MAX_ARR_LEN] = "Enter a password below";
 
-    //print out data that has been received from the server
+
+    //Start asking for username
+    recv(clientSocket, &usernameRequest, MAX_ARR_LEN, 0);
+    printf("Server: %s\n", usernameRequest);
+    scanf("%s", clientUsername);
+
+    //Optimize size for username
+    for(int i = 0; i < MAX_ARR_LEN; i++)
+    {
+        if(clientUsername[i] != '\n')
+        {
+            continue;
+        }
+        else
+        {
+            clientUsername = (char*) realloc(clientUsername, i + 1);
+        }
+    }
+    //Send username to server
+    send(client_socket, clientUsername, sizeof(clientUsername), 0);
+
+
+
+    //Send the client passcode to the server
+    send(clientSocket, clientPasscode, sizeof(clientPasscode), 0);
+
+
+    //Now ask for password
+    recv(clientSocket, &pwdRequest, MAX_ARR_LEN, 0);
     printf("Server: %s\n", pwdRequest);
     scanf("%s", clientPasscode);
 
     //Optimize the memory allocation by removing everything after the new line terminator
-    int stringSize = 0;
     for(int i = 0; i < MAX_ARR_LEN; i++)
     {
         if(clientPasscode[i] != '\n')
@@ -75,12 +105,13 @@ int main()
     }
 
 
+
     //Send the client passcode to the server
     send(clientSocket, clientPasscode, sizeof(clientPasscode), 0);
 
     //Allow for message to be received from server as to whether or not kick has happened
     recv(clientSocket, &pwdMessage, MAX_ARR_LEN, 0);
-    //printf("%s\n", pwdMessage);
+
 
     //Clear the screen before printing the time
     system("clear");
