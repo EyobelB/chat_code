@@ -3,13 +3,52 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
+#include <string.h>
 #include <unistd.h>
+#include <pthread.h>
+#define MAX_ARR_LEN 256
+#define MAX_CLIENTS 5
 
+int client_sockets[MAX_CLIENTS];
+
+/*
+callback function for pthread_create that recieves 
+messages from the clients and sends them to all the other clients
+*/
+void* forwardMessages(void* client_socket)
+{
+    int socket = *(int*)client_socket;
+    char message[MAX_ARR_LEN];
+
+    //loops until a message is received
+    while (recv(socket, &message, MAX_ARR_LEN, 0)>0)
+    {
+        //concatenates the sender's socket to them message and prints to the server console
+        char sender[MAX_ARR_LEN];
+        sprintf(sender, "%d: ", socket);
+        printf("%s\n", strcat(sender, message));
+
+        //loops through all the clients
+        for(int i = 0; i < MAX_CLIENTS; i++)
+        {
+
+            //checks to make sure the message is sent to all but the original sender
+            if(client_sockets[i] != socket)
+            {
+                //concatenates the sender's socket and sends to the client
+                char colon[MAX_ARR_LEN];
+                sprintf(colon, "%d: ", socket);
+                send(client_sockets[i], strcat(colon, message), MAX_ARR_LEN, 0);
+            }
+
+        }
+    }
+    printf("%d has left\n", socket);
+    return NULL;
+}
 
 int main()
 {
-    char server_message[256] = "Successfully connected!";
 
     int serverSocket;
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -18,26 +57,32 @@ int main()
     //define the server address
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(9002);
+    server_address.sin_port = htons(8080);
     server_address.sin_addr.s_addr = INADDR_ANY;
 
     //bind the socket to the specified IP and port
     bind(serverSocket, (struct sockaddr*) &server_address, sizeof(server_address));
 
-    //Second parameter on listen determines how many clients to listen for
-    listen(serverSocket, 1);
+    //second parameter on listen determines how many clients to listen for
+    listen(serverSocket, MAX_CLIENTS);
 
-    //Start accepting client connections
-    int client_socket;
-    client_socket = accept(serverSocket, NULL, NULL);
-   
+    //iterator for the client_sockets array
+    int n = 0;
 
-    //Send a server message
-    //send(client_socket, server_message, sizeof(server_message), 0);
-    
-    char message_output[256];
-    recv(client_socket, &message_output, sizeof(message_output), 0);
-    printf("%d: %s", client_socket, message_output);
+    //loops until a new client connection is found and accepted
+    while((client_sockets[n] = accept(serverSocket, (struct sockaddr *)NULL, NULL))) 
+    {
+        //initializes a new pthread and creates a pointer for the client's socket
+        pthread_t thread;
+        int *tmp = malloc(sizeof(*tmp));
+        *tmp = client_sockets[n];
+
+        //creates the pthread and runs the forwardMessages function
+        pthread_create(&thread, NULL, forwardMessages, tmp);
+        
+        n++;
+    }
+
 
     //close the socket now
     close(serverSocket);
