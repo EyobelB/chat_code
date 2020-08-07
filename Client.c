@@ -1,148 +1,123 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <string.h>
-#include <unistd.h>
 #include <time.h>
-#include <pthread.h>
+#include <unistd.h>
+
 
 #define MAX_ARR_LEN 256
 
-//callback for pthread_create, receives messages from the server
-void* receiveMessages(void* server_socket)
-{
-    char message[MAX_ARR_LEN];
-    int socket = *(int*)server_socket;
 
-    //loops until a message is received and then prints it out
-    while(recv(socket, message, MAX_ARR_LEN, 0)>0)
-    {
-        printf("%s\n", message);
-    }
-    return NULL;
-}
 
 //ASSUME CLIENT CODE HERE
 int main()
 {
-    //Define time related data
+    //Define time immediately
     time_t timeTrackerInSeconds, val = 1;
+
+    //Pointer to other types of time
     struct tm* current_time;
     timeTrackerInSeconds = time(NULL);
+
     current_time = localtime(&timeTrackerInSeconds);
 
-    //create a socket
-    int server_socket;
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-    //specify an address for the client
+
+    //Create a socket
+    int clientSocket;
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+    //Specify an address for the client
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(9002);
+    server_address.sin_port = htons(6667);
     server_address.sin_addr.s_addr = INADDR_ANY;
-    int connection_status;
-    connection_status = connect(server_socket, (struct sockaddr *) &server_address, sizeof(server_address));
 
-    //checks if the client connected successfully
-    if(connection_status == -1)
+    int connection_status = connect(clientSocket, (struct sockaddr *) &server_address, sizeof(server_address));
+
+    //Check for potential connection errors
+    if (connection_status == -1)
     {
-        printf("Server: There was an error making a connection to the remote socket.");
+        printf("Server: There was an error in making a connection to the remote socket.");
+        close(clientSocket);
     }
 
-    //
+    //This code will receive(recv) data from a server
+    char server_output[MAX_ARR_LEN];
+    char* clientUsername = calloc(MAX_ARR_LEN, sizeof(char));
+    char* clientPasscode = calloc(MAX_ARR_LEN, sizeof(char));
+    char pwdMessage[MAX_ARR_LEN];
 
-    //Initialize the pthread
-    pthread_t thread;
+    char usernameRequest[MAX_ARR_LEN];
+    char pwdRequest[MAX_ARR_LEN];
 
-    //create a pointer to the server_socket for the receiveMessages function
-    int *tmp = malloc(sizeof(*tmp));
-    *tmp = server_socket;
-
-    //creates the thread that runs receiveMessages while the current thread runs the while loop
-    pthread_create(&thread, NULL, receiveMessages, tmp);
-    short verified = 0;
-    char serverStatus[23];
-    char usernamePrompt[23];
-    char* username = calloc(MAX_ARR_LEN, sizeof(char));
-    char* password = calloc(MAX_ARR_LEN, sizeof(char));
-    char passwordPrompt[25];
-    char acceptancePrompt[25];
+    recv(clientSocket, &server_output, sizeof(server_output), 0);
+    printf("Server: %s\n", server_output);
+    recv(clientSocket, &server_output, MAX_ARR_LEN, 0);
 
 
-    while(1)
+
+    //Start asking for username
+    recv(clientSocket, &usernameRequest, MAX_ARR_LEN, 0);
+    printf("Server: %s\n", usernameRequest);
+    scanf("%s", clientUsername);
+
+    //Optimize size for username
+    for(int i = 0; i < MAX_ARR_LEN; i++)
     {
-        char messageToSend[MAX_ARR_LEN];
-
-        //Check verification of passcode
-        if(verified == 0)
+        if(clientUsername[i] != '\n')
         {
-            recv(server_socket, &serverStatus, sizeof(serverStatus), 0);
-            recv(server_socket, &usernamePrompt, sizeof(usernamePrompt), 0);
-
-            printf("Server: %s\n", usernamePrompt);
-            //Scan for a username
-            fgets(username, MAX_ARR_LEN, stdin);
-            //Send username to the server after reallocation
-            for(int i  = 0; i < MAX_ARR_LEN; i++)
-            {
-              if(username[i] != '\n')
-              {
-                continue;
-              }
-              else
-              {
-                username = (char*) realloc(username, i + 1);
-              }
-            }
-            //Now send username
-            send(server_socket, username, sizeof(username), 0);
-
-            //Now start password handling
-            recv(server_socket, &passwordPrompt, MAX_ARR_LEN, 0);
-            printf("Server: %s\n", passwordPrompt);
-            scanf("%s", password);
-
-            //Optimize the memory allocation of password
-            for(int i = 0; i < MAX_ARR_LEN; i++)
-            {
-              if(password[i] != '\n')
-              {
-                continue;
-              }
-              else
-              {
-                password = (char*) realloc(password, i + 1);
-              }
-            }
-
-            //Send passcode to server
-            send(server_socket, password, sizeof(password), 0);
-
-            //Receieve the acceptance prompt
-            recv(server_socket, &acceptancePrompt, sizeof(acceptancePrompt), 0);
-
-            //Prepare screen for future posts
-            system("clear");
-            //Print the time
-            printf("[%02d:%02:%02d] Server: %s", current_time->tm_hour, current_time->tm_min, current_time->tm_sec, acceptancePrompt);
-            verified = 1;
+            continue;
         }
-
-        //receive a message from the user, removes the newline, and checks for the exit character, "~"
-        fgets(messageToSend, MAX_ARR_LEN, stdin);
-        strtok(messageToSend, "\n");
-        if(strcmp("~", messageToSend) == 0)
+        else
         {
-            break;
+            clientUsername = (char*) realloc(clientUsername, i + 1);
         }
+    }
+    //Send username to server
+    send(client_socket, clientUsername, sizeof(clientUsername), 0);
 
-        //sends the trimmed message to the server
-        send(server_socket, messageToSend, MAX_ARR_LEN, 0);
+
+
+    //Send the client passcode to the server
+    send(clientSocket, clientPasscode, sizeof(clientPasscode), 0);
+
+
+    //Now ask for password
+    recv(clientSocket, &pwdRequest, MAX_ARR_LEN, 0);
+    printf("Server: %s\n", pwdRequest);
+    scanf("%s", clientPasscode);
+
+    //Optimize the memory allocation by removing everything after the new line terminator
+    for(int i = 0; i < MAX_ARR_LEN; i++)
+    {
+        if(clientPasscode[i] != '\n')
+        {
+            continue;
+        }
+        else
+        {
+            clientPasscode = (char*) realloc(clientPasscode, i + 1);
+        }
     }
 
 
-    close(server_socket);
+
+    //Send the client passcode to the server
+    send(clientSocket, clientPasscode, sizeof(clientPasscode), 0);
+
+    //Allow for message to be received from server as to whether or not kick has happened
+    recv(clientSocket, &pwdMessage, MAX_ARR_LEN, 0);
+
+
+    //Clear the screen before printing the time
+    system("clear");
+    printf("[%02d:%02d:%02d] %s", current_time->tm_hour, current_time->tm_min, current_time->tm_sec, pwdMessage);
+
+    close(clientSocket);
+
     return 0;
 }
