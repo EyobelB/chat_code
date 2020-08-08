@@ -83,6 +83,7 @@ int main()
     recv(server_socket, welcomeMessage, MAX_ARR_LEN, 0);
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
+    system("clear");
     printf("[%02d:%02d:%02d] Server: %s", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, welcomeMessage);
 
     //creates the thread that runs receiveMessages while the current thread runs the while loop
