@@ -10,6 +10,8 @@
 #define MAX_CLIENTS 5
 
 int client_sockets[MAX_CLIENTS];
+char username[MAX_CLIENTS][MAX_ARR_LEN];
+
 
 /*
 callback function for pthread_create that recieves 
@@ -17,7 +19,8 @@ messages from the clients and sends them to all the other clients
 */
 void* forwardMessages(void* client_socket)
 {
-    int socket = *(int*)client_socket;
+    int socket = client_sockets[*(int*)client_socket];
+    
     char message[MAX_ARR_LEN];
 
     //loops until a message is received
@@ -25,7 +28,7 @@ void* forwardMessages(void* client_socket)
     {
         //concatenates the sender's socket to them message and prints to the server console
         char sender[MAX_ARR_LEN];
-        sprintf(sender, "%d: ", socket);
+        sprintf(sender, "%s: ", username[*(int*)client_socket]);
         printf("%s\n", strcat(sender, message));
 
         //loops through all the clients
@@ -37,7 +40,7 @@ void* forwardMessages(void* client_socket)
             {
                 //concatenates the sender's socket and sends to the client
                 char colon[MAX_ARR_LEN];
-                sprintf(colon, "%d: ", socket);
+                sprintf(colon, "%s: ", username[*(int*)client_socket]);
                 send(client_sockets[i], strcat(colon, message), MAX_ARR_LEN, 0);
             }
 
@@ -75,8 +78,9 @@ int main()
         //initializes a new pthread and creates a pointer for the client's socket
         pthread_t thread;
         int *tmp = malloc(sizeof(*tmp));
-        *tmp = client_sockets[n];
+        *tmp = n;
 
+        recv(client_sockets[n], &username[n], MAX_ARR_LEN, 0);
         //creates the pthread and runs the forwardMessages function
         pthread_create(&thread, NULL, forwardMessages, tmp);
         

@@ -51,6 +51,10 @@ int main()
     int *tmp = malloc(sizeof(*tmp));
     *tmp = server_socket;
 
+    char username[MAX_ARR_LEN];
+    printf("Please enter a username: ");
+    scanf("%s", username);
+    send(server_socket, username, MAX_ARR_LEN, 0);
     //creates the thread that runs receiveMessages while the current thread runs the while loop
     pthread_create(&thread, NULL, receiveMessages, tmp);
     while(1) 
