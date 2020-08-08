@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
 #define MAX_ARR_LEN 256
 
@@ -26,6 +27,9 @@ void* receiveMessages(void* server_socket)
 //ASSUME CLIENT CODE HERE
 int main()
 {
+    time_t rawtime;
+    struct tm * timeinfo;
+
     //create a socket
     int server_socket;
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -33,7 +37,7 @@ int main()
     //specify an address for the client
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(8080);
+    server_address.sin_port = htons(9002);
     server_address.sin_addr.s_addr = INADDR_ANY;
     int connection_status;
     connection_status = connect(server_socket, (struct sockaddr *) &server_address, sizeof(server_address));
@@ -41,7 +45,11 @@ int main()
     //checks if the client connected successfully
     if(connection_status == -1)
     {
-        printf("Failed to connect");
+        printf("Failed to connect\n");
+    }
+    else
+    {
+        printf("Successfully connected\n\n");
     }
 
     //Initialize the pthread
@@ -54,7 +62,29 @@ int main()
     char username[MAX_ARR_LEN];
     printf("Please enter a username: ");
     scanf("%s", username);
+
+
+    char *userPassword = calloc(MAX_ARR_LEN, sizeof(char));
+    printf("\nPlease enter the password: ");
+    scanf("%s", userPassword);
+
+    for(int i = 0; i < MAX_ARR_LEN; i++)
+    {
+        if(userPassword[i] == '\n')
+        {
+            userPassword = (char*) realloc(userPassword, i+1);
+        }
+    }
+
     send(server_socket, username, MAX_ARR_LEN, 0);
+    send(server_socket, userPassword, sizeof(userPassword), 0);
+
+    char welcomeMessage[MAX_ARR_LEN];
+    recv(server_socket, welcomeMessage, MAX_ARR_LEN, 0);
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    printf("[%02d:%02d:%02d] Server: %s", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, welcomeMessage);
+
     //creates the thread that runs receiveMessages while the current thread runs the while loop
     pthread_create(&thread, NULL, receiveMessages, tmp);
     while(1) 
