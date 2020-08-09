@@ -59,7 +59,9 @@ void* forwardMessages(void* client_socket)
         //concatenates the sender's socket to them message and prints to the server console
         char sender[MAX_ARR_LEN];
         sprintf(sender, "%s: ", username[*(int*)client_socket]);
-        printf("%s\n", strcat(timeStamp, strcat(sender, message)));
+        char serverTimeStamp[MAX_ARR_LEN];
+        strcpy(serverTimeStamp, timeStamp);
+        printf("%s\n", strcat(serverTimeStamp, strcat(sender, message)));
 
         //loops through all the clients
         for(int i = 0; i < MAX_CLIENTS; i++)
